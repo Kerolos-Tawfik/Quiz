@@ -1,8 +1,20 @@
- /** @type {import('tailwindcss').Config} */
- export default {
-  content: ["./src/**/*.{html,js}"],
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
-    extend: {},
+    extend: {
+
+      animation: {
+        'spin-slow': 'spin 10s linear infinite',
+      }, 
+      fontFamily: {
+        tajawal: ['Tajawal', 'sans-serif'],
+      },
+    },
   },
+  
   plugins: [],
 }

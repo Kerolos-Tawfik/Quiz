@@ -9,11 +9,12 @@ class QuestionController extends Controller
 {
     public function index()
     {
-        $questions = Question::all();
-
+        $questions = Question::with('answers')->get();
+    
         return response()->json([
             'status' => 'success',
             'data' => $questions
         ]);
     }
+    
 }
