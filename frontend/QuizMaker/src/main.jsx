@@ -1,13 +1,12 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import Questions from './Questions.jsx'
-
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom'; // ✅ أضف هذا السطر
 import './index.css';
-import App from './App.jsx';
-import Result from './Result.jsx';
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <Questions />
-  </StrictMode>,
-)
+import App from './App';
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>   {/* ✅ أضف هذا */}
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+);

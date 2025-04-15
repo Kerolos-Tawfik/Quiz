@@ -1,16 +1,21 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-export default function App() {
+import { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import StudentInfo from './studentInfo';
+import Questions from './Questions';
+import Result from './Result';
+import AdminPanel from './adminPanel';
+
+function App() {
+  const [student, setStudent] = useState(null);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-      <h1 className="text-4xl font-bold text-red-500 underline">
-        Tailwind شغال ✅
-      </h1>
-    </div>
+    <Routes>
+      <Route path="/" element={<StudentInfo setStudent={setStudent} />} />
+      <Route path="/Questions" element={<Questions student={student} />} />
+      <Route path="/Result" element={<Result />} />
+      <Route path="/admin" element={<AdminPanel />} />
+    </Routes>
   );
 }
 
-
-
-
+export default App;

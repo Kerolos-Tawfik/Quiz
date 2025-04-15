@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
+            $table->string('category')->nullable();
             $table->string('title')->nullable();
             $table->longText('content');
             $table->timestamps();

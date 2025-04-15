@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Question;
+use App\Models\studentinfo;
+use Illuminate\Http\Request;
 
 class QuestionController extends Controller
 {
@@ -16,5 +18,6 @@ class QuestionController extends Controller
             'data' => $questions
         ]);
     }
+    
     
 }

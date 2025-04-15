@@ -26,34 +26,51 @@ class ImportXmlQuestions extends Command
      */
     public function handle()
     {
-        $xmlPath = storage_path('app/data/الأسئلة-101-الجذور-14461013-1759.xml');
+        $xmlPath = storage_path('app/data/الأسئلة-101-الأسس-14461013-1755.xml');
         $xml = simplexml_load_file($xmlPath);
+    
+        $currentCategory = 'غير مصنف';
+    
         foreach ($xml->question as $q) {
-            if ((string)$q['type'] !== 'multichoice') continue;
-        
-            $title = (string) $q->name->text ?? null;
-            $questionHtml = (string) $q->questiontext->text;
-        
+            $type = (string)$q['type'];
+    
+            // لو نوع السؤال تصنيف، خزنه للتالي
+            if ($type === 'category') {
+                if (isset($q->category->text)) {
+                    $fullCategory = (string)$q->category->text;
+                    // خد آخر جزء بعد آخر /
+                    $parts = explode('/', $fullCategory);
+                    $currentCategory = trim(end($parts)); // مثلاً: الجذور
+                }
+                continue;
+            }
+    
+            // نكمل بس على أسئلة الاختيار من متعدد
+            if ($type !== 'multichoice') continue;
+    
+            // بيانات السؤال
+            $title = isset($q->name->text) ? (string)$q->name->text : 'بدون عنوان';
+            $questionHtml = isset($q->questiontext->text) ? (string)$q->questiontext->text : 'لا يوجد محتوى';
+    
             // إنشاء السؤال
             $question = Question::create([
                 'title' => $title,
                 'content' => $questionHtml,
+                'category' => $currentCategory,
             ]);
-        
-            // إنشاء الإجابات المرتبطة
+    
+            // الإجابات
             foreach ($q->answer as $ans) {
                 $answerText = (string) $ans->text;
                 $isCorrect = ((string) $ans['fraction']) === '100';
-        
+    
                 $question->answers()->create([
                     'text' => $answerText,
                     'is_correct' => $isCorrect,
                 ]);
             }
         }
-        
     
-        $this->info('تم استيراد الأسئلة بنجاح ✅');
+        $this->info('✅ تم استيراد الأسئلة بنجاح');
     }
-    
 }
