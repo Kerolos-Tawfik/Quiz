@@ -4,20 +4,23 @@ import React, { useEffect, useRef, useState } from 'react';
 
 const Result = ({ questions, userAnswers, onRestart, student }) => {
   const done = useRef(false);
+  const API_BASE = import.meta.env.VITE_API_URL;
 
+
+  
   const correctCount = questions.reduce((count, question) => {
     const selectedIndex = userAnswers[question.id];
     const isCorrect = question.answers[selectedIndex]?.is_correct == 1;
     return isCorrect ? count + 1 : count;
   }, 0);
-
+  
   const total = questions.length;
   const percentage = ((correctCount / total) * 100).toFixed(1);
  const handleQuizFinish = async () => {
       if (done.current) return; // ✅ تفادي التكرار
   
       try {
-        await axios.post('http://localhost:8000/api/students', {
+        await axios.post(`${API_BASE}/api/students`, {
           name: student.name,
           phone: student.phone,
           score: correctCount,
@@ -51,19 +54,8 @@ const Result = ({ questions, userAnswers, onRestart, student }) => {
       <p className="text-xl mb-2">إجابات صحيحة: {correctCount}</p>
       <p className="text-xl mb-6">نسبة النجاح: {percentage}%</p>
 
-      <button
-        onClick={whatsAppHandel}
-        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg mt-4"
-      >
-        إرسال نتيجتي عبر واتساب
-      </button>
 
-      <button
-        onClick={onRestart}
-        className="bg-yellow-600 hover:bg-yellow-700 text-black font-semibold px-6 py-3 rounded-lg mt-4"
-      >
-        مراجعه الأسئله
-      </button>
+
     </div>
   );
 };

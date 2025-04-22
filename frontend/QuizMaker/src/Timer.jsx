@@ -1,8 +1,15 @@
-// Timer.jsx
 import { useEffect, useState } from 'react';
 
-export default function Timer({ durationInSeconds, onTimeout }) {
-  const [timeLeft, setTimeLeft] = useState(durationInSeconds);
+export default function Timer({ durationInSeconds, onTimeout, startTime , currentIndex,currentQuestions}) {
+  const calculateInitialTimeLeft = () => {
+    if (startTime) {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      return Math.max(durationInSeconds - elapsed, 0);
+    }
+    return durationInSeconds;
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateInitialTimeLeft());
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -26,8 +33,10 @@ export default function Timer({ durationInSeconds, onTimeout }) {
   };
 
   return (
-    <div className="fixed top-4 left-4 bg-yellow-500 text-black px-4 py-2 rounded-lg text-lg shadow-md z-50">
-    <span className="text-lg">🕒</span>
-    <span className="text-lg font-bold">{formatTime(timeLeft)}</span>    </div>
+    <div className="fixed block top-2 left-4 bg-yellow-500 text-black px-4 py-2 rounded-lg text-lg shadow-md z-50">
+      <span className="text-lg">🕒</span>
+      <span className="text-lg font-bold">{formatTime(timeLeft)}</span>
+
+    </div>
   );
 }

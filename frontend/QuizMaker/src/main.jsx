@@ -5,7 +5,7 @@ import './index.css';
 import App from './App';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>   {/* ✅ أضف هذا */}
+    <BrowserRouter  basename="/">   {/* ✅ أضف هذا */}
       <App />
     </BrowserRouter>
   </React.StrictMode>
