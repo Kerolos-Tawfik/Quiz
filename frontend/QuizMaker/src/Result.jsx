@@ -20,7 +20,7 @@ const Result = ({ questions, userAnswers, onRestart, student }) => {
       if (done.current) return; // ✅ تفادي التكرار
   
       try {
-        await axios.post(`${API_BASE}/api/students`, {
+        await axios.post(`http://127.0.0.1:8000/api/students`, {
           name: student.name,
           phone: student.phone,
           score: correctCount,
@@ -34,7 +34,32 @@ const Result = ({ questions, userAnswers, onRestart, student }) => {
     useEffect(() => {
       handleQuizFinish();
     }, []);
-      
+    useEffect(() => {
+      const updateStudentScore = async () => {
+        try {
+          const studentId = localStorage.getItem('student_id');
+          if (!studentId) return;
+    
+          const correctCount = questions.reduce((count, question) => {
+            const selected = userAnswers[question.id];
+            const isCorrect = question.answers[selected]?.is_correct === 1;
+            return isCorrect ? count + 1 : count;
+          }, 0);
+    
+          const percentage = ((correctCount / questions.length) * 100).toFixed(1);
+    
+          await axios.put(`http://127.0.0.1:8000/api/students/${studentId}`, {
+            score: correctCount,
+            percentage: percentage
+          });
+        } catch (err) {
+          console.error('❌ فشل تحديث درجة الطالب', err);
+        }
+      };
+    
+      updateStudentScore();
+    }, []);
+    
 
   const whatsAppHandel = () => {
     const message = `📊 نتيجتي في الاختبار:

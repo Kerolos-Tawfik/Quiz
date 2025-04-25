@@ -53,3 +53,5 @@ Route::get('/category-questions-count', function () {
 Route::post('/admin-login', [AuthController::class, 'login']);
 Route::post('/question-bank/import', [QuestionController::class, 'import']);
 Route::delete('/question-bank/{category}', [QuestionController::class, 'destroy']);
+Route::put('/students/{id}', [StudentInfoController::class, 'update']);
+Route::delete('/students/del/all', [StudentInfoController::class, 'destroyAll']);

@@ -30,13 +30,16 @@ function StudentInfo({ setStudent }) {
 
         <label className="block mb-2 text-yellow-300">رقم الهاتف</label>
         <input
-          type="tel"
-          placeholder="+966 53 085 1081"
-          className="w-full mb-6 p-3 rounded-lg bg-gray-900 text-yellow-200 border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-        />
+  type="tel"
+  placeholder="05xxxxxxxx"
+  className="w-full mb-6 p-3 rounded-lg bg-gray-900 text-yellow-200 border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+  value={phone}
+  onChange={(e) => setPhone(e.target.value)}
+  pattern="05\d{8}"
+  title="الرقم يجب أن يبدأ بـ 05 ويتكون من 10 أرقام"
+  required
+/>
+
 
         <button
           type="submit"

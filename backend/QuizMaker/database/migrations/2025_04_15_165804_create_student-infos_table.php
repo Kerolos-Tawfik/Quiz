@@ -16,10 +16,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('phone');
             $table->integer('score');
-            $table->float('precentage');
+            $table->float('percentage');
             $table->timestamps();
         });
     }
+    
 
     /**
      * Reverse the migrations.
