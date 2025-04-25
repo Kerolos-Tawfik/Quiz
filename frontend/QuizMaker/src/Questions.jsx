@@ -31,9 +31,10 @@ const [reviewFilter, setReviewFilter] = useState('all'); // 'all' | 'incomplete'
 useEffect(() => {
   const registerStudent = async () => {
     try {
-      const res = await axios.post(`http://127.0.0.1:8000/api/students`, {
+      const res = await axios.post(`https://api.alamthal.org/api/students`, {
         name: student.name,
         phone: student.phone,
+        email: student.email,
         score: 0, // مؤقتًا صفر
         percentage: 0 // مؤقتًا صفر
       });
@@ -81,8 +82,8 @@ useEffect(() => {
     setLoading(true);
     try {
       const [questionsRes, settingsRes] = await Promise.all([
-        axios.get(`http://127.0.0.1:8000/api/questions`),
-        axios.get(`http://127.0.0.1:8000/api/settings`)
+        axios.get(`https://api.alamthal.org/api/questions`),
+        axios.get(`https://api.alamthal.org/api/settings`)
       ])
   
       setAllQuestions(questionsRes.data.data);

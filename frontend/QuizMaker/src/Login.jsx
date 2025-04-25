@@ -15,7 +15,7 @@ const Login = () => {
     e.preventDefault();
   
     try {
-      await axios.post(`http://127.0.0.1:8000/api/admin-login`, {
+      await axios.post(`https://api.alamthal.org/api/admin-login`, {
         username,
         password,
       });

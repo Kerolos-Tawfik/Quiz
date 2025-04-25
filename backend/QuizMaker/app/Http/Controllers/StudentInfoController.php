@@ -23,6 +23,7 @@ public function store(Request $request) {
     $student = studentinfo::create([
         'name' => $request->name,
         'phone' => $request->phone,
+        'email' => $request->email,
         'score' => $request->score,
         'percentage' => $request->percentage
     ]);

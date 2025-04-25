@@ -1,13 +1,17 @@
 <?php
 
 use App\Http\Controllers\Api\QuestionController;
+use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\coustmMailController;
 use App\Http\Controllers\ExamSectionController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StudentInfoController;
+use App\Mail\coustmMail;
 use App\Models\Question;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 Route::get('/ping', function () {
     return response()->json(['message' => 'pong']);
@@ -55,3 +59,6 @@ Route::post('/question-bank/import', [QuestionController::class, 'import']);
 Route::delete('/question-bank/{category}', [QuestionController::class, 'destroy']);
 Route::put('/students/{id}', [StudentInfoController::class, 'update']);
 Route::delete('/students/del/all', [StudentInfoController::class, 'destroyAll']);
+Route::post('/email/send-code', [EmailVerificationController::class, 'sendCode']);
+Route::post('/email/verify-code', [EmailVerificationController::class, 'verifyCode']);
+Route::post('/email/sendMail', [coustmMailController::class, 'sendMail']);
