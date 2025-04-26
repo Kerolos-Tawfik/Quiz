@@ -60,12 +60,23 @@ const AdminPanel = () => {
       console.error('❌ Error loading students:', err);
     }
   };
-  const handleNoteChange = (catName, newNote) => {
+  const handleNoteChange = async (catName, newNote) => {
     setNotes(prevNotes => ({
       ...prevNotes,
       [catName]: newNote,
     }));
+  
+    try {
+      await axios.post('https://api.alamthal.org/api/question-bank/update-note', {
+        category: catName,
+        note: newNote,
+      });
+      console.log('✅ تم الحفظ تلقائيًا');
+    } catch (err) {
+      console.error('❌ فشل في حفظ الملاحظة:', err);
+    }
   };
+  
   
   const fetchSettings = async () => {
     try {
@@ -409,13 +420,14 @@ className="w-1/2 p-2 rounded-lg bg-gray-900 text-yellow-300 border border-yellow
      <tr key={i} className="bg-gray-700 hover:bg-gray-600 transition">
        <td className="p-3 border border-yellow-600 font-bold">{cat.name}</td>
        <td className="p-3 border border-yellow-600">
-         <textarea
-           value={notes[cat.name] || ''}
-           onChange={(e) => handleNoteChange(cat.name, e.target.value)}
-           placeholder="📝 ملاحظات هذا البنك..."
-           className="w-full p-2 rounded bg-gray-900 text-yellow-200 border border-yellow-500 resize-none"
-           rows={3}
-         />
+       <textarea
+          value={notes[cat.name] || ''}
+          onChange={(e) => handleNoteChange(cat.name, e.target.value)}
+          placeholder="📝 ملاحظات هذا البنك..."
+          className="w-full p-2 rounded bg-gray-900 text-yellow-200 border border-yellow-500 resize-none"
+          rows={3}
+        />
+
        </td>
        <td className="p-3 border border-yellow-600 text-center">
          <p className="mb-2">عدد الأسئلة: <span className="font-bold">{questionCounts[cat.name] || 0}</span></p>

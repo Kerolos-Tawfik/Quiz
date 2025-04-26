@@ -16,10 +16,11 @@ class EmailVerificationController extends Controller
         try {
             $request->validate([
                 'email' => 'required|email',
+                'name'=>'required'
             ]);
     
             $code = random_int(1000, 9999);
-    
+            $name  = $request->name;
             EmailVerification::updateOrCreate(
                 ['email' => $request->email],
                 [
@@ -28,7 +29,7 @@ class EmailVerificationController extends Controller
                 ]
             );
     
-            Mail::to($request->email)->send(new EmailVerificationCode($code));
+            Mail::to($request->email)->send(new EmailVerificationCode($code , $name));
     
             return response()->json(['message' => 'تم إرسال الكود بنجاح']);
         } catch (\Throwable $e) {

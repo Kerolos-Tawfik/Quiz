@@ -12,7 +12,7 @@ class EmailVerificationCode extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public $code) {}
+    public function __construct(public $code , public $name) {}
 
     public function envelope(): Envelope
     {

@@ -128,26 +128,44 @@ useEffect(() => {
     );
   }
   
-  
+ 
+
   const startSection = () => {
     const current = settings[sectionIndex];
-    const questions = [];
-
-
+    let quantQuestions = [];
+    let verbalQuestions = [];
+  
     for (const [bank, count] of Object.entries(current.questions_per_bank)) {
       const filtered = allQuestions.filter(q => q.category === bank);
-      
       const shuffled = filtered.sort(() => 0.5 - Math.random());
-      questions.push(...shuffled.slice(0, count));
+  
+      // نحدد إذا كان البنك كمي أو لفظي
+      if ([
+        'الأعداد وخصائصها', 'قابلية القسمة', 'الأعداد العشرية', 'الكسور',
+        'النسبة', 'التناسب', 'النسبة المئوية', 'المتوسط', 'مسائل حسابية', 'منوعات حسابية',
+        'الزوايا والمستقيمات', 'المثلث', 'الرباعي', 'الدائرة',
+        'الاشكال المركبة', 'الهندسة الإحداثية', 'المجسمات', 'منوعات هندسية',
+        'الرسوم البيانية', 'الاحتمالات', 'منوعات',
+        'المتطابقات', 'المقادير الجبرية', 'المعادلات والمتباينات',
+        'الجذور', 'المسائل اللفظية', 'النمط', 'منوعات جبر'
+      ].includes(bank)) {
+        quantQuestions.push(...shuffled.slice(0, count));
+      } else {
+        verbalQuestions.push(...shuffled.slice(0, count));
+      }
     }
-    setQuestionsSeen(prev => [...prev, ...questions]);
-    setOriginalCurrentQuestions(questions); // ✅ النسخة الأصلية
-
-    setCurrentQuestions(questions);
+  
+    // ✅ اللفظي الأول بعدين الكمي
+    const orderedQuestions = [...verbalQuestions, ...quantQuestions];
+  
+    setQuestionsSeen(prev => [...prev, ...orderedQuestions]);
+    setOriginalCurrentQuestions(orderedQuestions);
+    setCurrentQuestions(orderedQuestions);
     setCurrentIndex(0);
     setSectionStartTime(Date.now());
     setStage('inSection');
   };
+  
 
   const finishSection = () => {
 
@@ -423,7 +441,6 @@ flag
 
   {/* ✅ القسم الأيسر: معلومات السؤال */}
   <div className="col-span-2 bg-gray-50 border-zinc-400 p-4 border rounded-lg h-fit overflow-y-auto max-h-[calc(100vh-250px)] hidden md:block">
-  <h3 className="font-bold text-gray-700 text-lg mb-4">📋 ملاحظات بنك الأسئلة</h3>
 <p className="text-gray-800 text-lg mb-2 whitespace-pre-line">
   {
     current?.note

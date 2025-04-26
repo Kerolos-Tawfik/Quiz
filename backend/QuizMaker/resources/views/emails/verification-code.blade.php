@@ -43,7 +43,7 @@
 </head>
 <body>
     <div class="container">
-        <h2>رمز التحقق الخاص بك:</h2>
+        <h2>رمز التحقق الخاص ب {{$name}}:</h2>
         <div class="code">{{ $code }}</div>
         <p>هذا الرمز صالح لمدة <strong>10 دقائق</strong> فقط.</p>
         <div class="footer">

@@ -1,4 +1,3 @@
-// src/Result.jsx
 import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -6,43 +5,200 @@ const Result = ({ questions, userAnswers, onRestart, student }) => {
   const done = useRef(false);
   const [showReview, setShowReview] = useState(false);
 
-  // احسب عدد الإجابات الصحيحة
+  // عدد الإجابات الصحيحة
   const correctCount = questions.reduce((count, question) => {
     const selectedIndex = userAnswers[question.id];
     const isCorrect = question.answers[selectedIndex]?.is_correct == 1;
     return isCorrect ? count + 1 : count;
   }, 0);
 
+  useEffect(() => {
+    if (window.MathJax) {
+      window.MathJax.Hub.Queue(['Typeset', window.MathJax.Hub]);
+    }
+  }, [showReview]);
+
   const total = questions.length;
   const wrongCount = total - correctCount;
   const percentage = ((correctCount / total) * 100).toFixed(1);
 
-  // جهز تفاصيل الأقسام
-  const sectionsSummary = questions.reduce((acc, question) => {
-    const sectionName = question.section || 'قسم غير محدد';
+  const verbalBanksList = [
+    'الخطأ السياقي',
+    'إكمال الجمل',
+    'الكلمة الشاذة',
+    'استيعاب المقروء'
+  ];
+
+  const quantBanksList = [
+    'الأعداد وخصائصها',
+    'قابلية القسمة',
+    'الأعداد العشرة',
+    'الكسور',
+    'النسبة',
+    'التناسب',
+    'النسبة المئوية',
+    'المتوسط',
+    'مسائل حسابية',
+    'الزوايا والمستقيمات',
+    'المثلث',
+    'الرباعي',
+    'الدائرة',
+    'الاشكال المركبة',
+    'الهندسة الإحداثية',
+    'المجسمات',
+    'الرسوم البيانية',
+    'الاحتمالات',
+    'منوعات',
+    'المتطابقات',
+    'المقادير الجبرية',
+    'المعادلات والمتباينات',
+    'الأسس',
+    'الجذور',
+    'المسائل اللفظية',
+    'النمط'
+  ];
+
+  // دالة تطابق ذكي
+// مكان normalize الأديم
+const normalizeArabic = (text) => {
+  return text
+    ?.toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[أإآء]/g, 'ا')
+    .replace(/[ة]/g, 'ه')
+    .replace(/[ًٌٍَُِّ]/g, '');
+};
+
+const isSimilarName = (name, list) => {
+  const normalizedName = normalizeArabic(name);
+  return list.some(original => normalizeArabic(original) === normalizedName);
+};
+
+  const bankSummary = {};
+
+  questions.forEach((question) => {
+    const bankName = question.category || 'بنك غير معروف';
     const selectedIndex = userAnswers[question.id];
     const isCorrect = question.answers[selectedIndex]?.is_correct == 1;
 
-    if (!acc[sectionName]) {
-      acc[sectionName] = { correct: 0, wrong: 0 };
+    if (!bankSummary[bankName]) {
+      bankSummary[bankName] = { correct: 0, wrong: 0 };
     }
-    if (isCorrect) {
-      acc[sectionName].correct += 1;
-    } else {
-      acc[sectionName].wrong += 1;
-    }
-    return acc;
-  }, {});
 
-  const sectionsArray = Object.entries(sectionsSummary).map(([name, data]) => ({
-    name,
-    correct: data.correct,
-    wrong: data.wrong,
-    percentage: total > 0 ? ((data.correct / (data.correct + data.wrong)) * 100).toFixed(1) : 0,
-  }));
+    if (isCorrect) {
+      bankSummary[bankName].correct += 1;
+    } else {
+      bankSummary[bankName].wrong += 1;
+    }
+  });
+
+  const sectionsArray = [
+    {
+      title: '📘 القسم اللفظي',
+      banks: Object.entries(bankSummary)
+        .filter(([bankName, data]) =>
+          isSimilarName(bankName, verbalBanksList) && (data.correct > 0 || data.wrong > 0)
+        )
+        .map(([bankName, data]) => ({
+          name: bankName,
+          score: data.correct,
+          correct: data.correct,
+          wrong: data.wrong
+        })),
+    },
+    {
+      title: '📗 القسم الكمي',
+      banks: [
+        {
+          name: 'الحساب',
+          score: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'الأعداد وخصائصها', 'قابلية القسمة', 'الأعداد العشرية', 'الكسور',
+              'النسبة', 'التناسب', 'النسبة المئوية', 'المتوسط', 'مسائل حسابية', 'منوعات حسابية'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.correct, 0),
+          correct: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'الأعداد وخصائصها', 'قابلية القسمة', 'الأعداد العشرية', 'الكسور',
+              'النسبة', 'التناسب', 'النسبة المئوية', 'المتوسط', 'مسائل حسابية', 'منوعات حسابية'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.correct, 0),
+          wrong: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'الأعداد وخصائصها', 'قابلية القسمة', 'الأعداد العشرية', 'الكسور',
+              'النسبة', 'التناسب', 'النسبة المئوية', 'المتوسط', 'مسائل حسابية', 'منوعات حسابية'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.wrong, 0),
+        },
+        {
+          name: 'الهندسة',
+          score: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'الزوايا والمستقيمات', 'المثلث', 'الرباعي', 'الدائرة',
+              'الاشكال المركبة', 'الهندسة الإحداثية', 'المجسمات', 'منوعات هندسية'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.correct, 0),
+          correct: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'الزوايا والمستقيمات', 'المثلث', 'الرباعي', 'الدائرة',
+              'الاشكال المركبة', 'الهندسة الإحداثية', 'المجسمات', 'منوعات هندسية'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.correct, 0),
+          wrong: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'الزوايا والمستقيمات', 'المثلث', 'الرباعي', 'الدائرة',
+              'الاشكال المركبة', 'الهندسة الإحداثية', 'المجسمات', 'منوعات هندسية'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.wrong, 0),
+        },
+        {
+          name: 'تحليل البيانات',
+          score: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'الرسوم البيانية', 'الاحتمالات', 'منوعات'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.correct, 0),
+          correct: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'الرسوم البيانية', 'الاحتمالات', 'منوعات'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.correct, 0),
+          wrong: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'الرسوم البيانية', 'الاحتمالات', 'منوعات'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.wrong, 0),
+        },
+        {
+          name: 'الجبر',
+          score: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'المتطابقات', 'المقادير الجبرية', 'المعادلات والمتباينات',
+              'الجذور', 'المسائل اللفظية', 'النمط', 'منوعات جبر'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.correct, 0),
+          correct: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'المتطابقات', 'المقادير الجبرية', 'المعادلات والمتباينات',
+              'الجذور', 'المسائل اللفظية', 'النمط', 'منوعات جبر'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.correct, 0),
+          wrong: Object.entries(bankSummary)
+            .filter(([bankName]) => [
+              'المتطابقات', 'المقادير الجبرية', 'المعادلات والمتباينات',
+              'الجذور', 'المسائل اللفظية', 'النمط', 'منوعات جبر'
+            ].some(sub => isSimilarName(bankName, [sub])))
+            .reduce((acc, [, data]) => acc + data.wrong, 0),
+        }
+      ]
+    }
+  ];
+  
 
   const handleQuizFinish = async () => {
-    if (done.current) return; // تفادي التكرار
+    if (done.current) return;
 
     try {
       await axios.post(`https://api.alamthal.org/api/students`, {
@@ -52,6 +208,8 @@ const Result = ({ questions, userAnswers, onRestart, student }) => {
         score: correctCount,
         percentage: percentage,
       });
+      console.log(sectionsArray);
+
       done.current = true;
     } catch (error) {
       console.error(error);
@@ -78,8 +236,7 @@ const Result = ({ questions, userAnswers, onRestart, student }) => {
     handleQuizFinish();
     sendResultMail();
   }, []);
-
-  // المراجعة
+  // مراجعة الإجابات
   if (showReview) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-8 font-[Tajawal] text-right">

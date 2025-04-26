@@ -6,30 +6,33 @@ export default function Timer({ durationInSeconds, onTimeout, startTime }) {
 
   useEffect(() => {
     if (startTime) {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000);
       const remaining = Math.max(durationInSeconds - elapsed, 0);
       setTimeLeft(remaining);
     }
-    called.current = false; // ✅ ضروري تعيد تهيئة دا مع تغيير startTime
+    called.current = false; // عشان مع كل قسم جديد أو إعادة يبدأ نظيف
   }, [startTime, durationInSeconds]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          if (!called.current && onTimeout) {
-            called.current = true;
-            onTimeout();
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
+      if (!startTime) return;
+
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000);
+      const remaining = Math.max(durationInSeconds - elapsed, 0);
+
+      setTimeLeft(remaining);
+
+      if (remaining <= 0 && !called.current) {
+        clearInterval(timer);
+        called.current = true;
+        if (onTimeout) onTimeout();
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [onTimeout]);
+  }, [onTimeout, startTime, durationInSeconds]);
 
   const formatTime = (totalSeconds) => {
     const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');

@@ -18,7 +18,7 @@ class QuestionController extends Controller
             'data' => $questions
         ]);
     }
-    public function import(Request $request)
+public function import(Request $request)
 {
     try {
         $request->validate([
@@ -45,6 +45,29 @@ class QuestionController extends Controller
             $title = (string)($q->name->text ?? 'بدون عنوان');
             $questionHtml = (string)($q->questiontext->text ?? 'لا يوجد محتوى');
 
+            // ✨ لو في صورة Base64 في السؤال
+            if (preg_match_all('/<file.+?name="(.+?)".+?encoding="base64">(.+?)<\/file>/s', $q->questiontext->asXML(), $matches, PREG_SET_ORDER)) {
+                foreach ($matches as $match) {
+                    $imageName = $match[1];
+                    $base64Data = $match[2];
+
+                    // المسار الحقيقي لحفظ الصور داخل مشروع الريأكت
+                    $reactImagesPath = '/home/alamthal/public_html/quiz/images/';
+
+                    // تأكد الفولدر موجود
+                    if (!file_exists($reactImagesPath)) {
+                        mkdir($reactImagesPath, 0755, true);
+                    }
+
+                    // احفظ الصورة
+                    file_put_contents($reactImagesPath . '/' . $imageName, base64_decode($base64Data));
+
+                    // استبدل @@PLUGINFILE@@ بمسار الصورة الصحيح داخل السؤال
+                    $questionHtml = str_replace('@@PLUGINFILE@@/' . $imageName, '/quiz/images/' . $imageName, $questionHtml);
+                }
+            }
+
+            // ✨ إنشاء السؤال
             $question = Question::create([
                 'title' => $title,
                 'content' => $questionHtml,
@@ -67,6 +90,8 @@ class QuestionController extends Controller
         ], 500);
     }
 }
+
+
 
     public function destroy($category)
     {
