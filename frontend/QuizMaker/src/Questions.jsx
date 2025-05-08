@@ -6,28 +6,25 @@ import Result from './Result';
 import { useNavigate } from 'react-router-dom';
 
 const Questions = ({ student }) => {
-  const API_BASE = import.meta.env.VITE_API_URL;
-
-
-
   const [settings, setSettings] = useState([]); // الأقسام
   const [allQuestions, setAllQuestions] = useState([]);
   const [sectionIndex, setSectionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
+  const [reviewFilter, setReviewFilter] = useState(null);
+
   const [currentQuestions, setCurrentQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [questionsSeen, setQuestionsSeen] = useState([]);
   const [loading, setLoading] = useState(true);
-const [progress, setProgress] = useState(0);
-const [sectionStartTime, setSectionStartTime] = useState(null);
-const [originalCurrentQuestions, setOriginalCurrentQuestions] = useState([]);
-const [sectionIntroStart, setSectionIntroStart] = useState(null);
-
-const [markedForReview, setMarkedForReview] = useState(() => {
-  const saved = localStorage.getItem('review_marks');
-  return saved ? JSON.parse(saved) : [];
-});
-const [reviewFilter, setReviewFilter] = useState('all'); // 'all' | 'incomplete' | 'marked'
+  const [progress, setProgress] = useState(0);
+  const [sectionStartTime, setSectionStartTime] = useState(null);
+  const [originalCurrentQuestions, setOriginalCurrentQuestions] = useState([]);
+  const [sectionIntroStart, setSectionIntroStart] = useState(null);
+  const [markedForReview, setMarkedForReview] = useState(() => {
+    const saved = localStorage.getItem('review_marks');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [stage, setStage] = useState('intro'); 
 useEffect(() => {
   const registerStudent = async () => {
     try {
@@ -48,10 +45,10 @@ useEffect(() => {
   if (student) {
     registerStudent();
   }
-}, [student]);
+  }, [student]);
 
 
-  const [stage, setStage] = useState('intro'); // intro, sectionIntro, inSection, review, result
+  
   const navigate = useNavigate()
   useEffect(() => {
     if (!student) {
@@ -60,11 +57,7 @@ useEffect(() => {
     }
     fetchData();
   }, []);
-  // useEffect(() => {
-  //   if (stage === 'sectionIntro') {
-  //     setSectionIntroStart(Date.now());
-  //   }
-  // }, [stage]);
+
   
   useEffect(() => {
     let interval;
@@ -78,6 +71,7 @@ useEffect(() => {
     return () => clearInterval(interval);
   }, [loading]);
   
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -104,6 +98,7 @@ useEffect(() => {
       setLoading(false);
     }
     
+    
   };useEffect(() => {
     
       if (window.MathJax) {
@@ -122,7 +117,7 @@ useEffect(() => {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-center text-yellow-300 font-bold text-lg">جاري تحميل الأسئلة والمعادلات ({progress}%) ...</p>
+          <p className="text-center text-yellow-300 font-bold text-lg">استعد، جاري تجهيز اختبارك الآن... ({progress}%)🚀</p>
         </div>
       </div>
     );
@@ -134,6 +129,8 @@ useEffect(() => {
     const current = settings[sectionIndex];
     let quantQuestions = [];
     let verbalQuestions = [];
+    let sortedVerbal = [];
+
   
     for (const [bank, count] of Object.entries(current.questions_per_bank)) {
       const filtered = allQuestions.filter(q => q.category === bank);
@@ -141,23 +138,45 @@ useEffect(() => {
   
       // نحدد إذا كان البنك كمي أو لفظي
       if ([
-        'الأعداد وخصائصها', 'قابلية القسمة', 'الأعداد العشرية', 'الكسور',
+        'الأعداد وخصائصها', 'قابلية القسمة', 'الأعداد العشرية', 'الأسس','الكسور',
         'النسبة', 'التناسب', 'النسبة المئوية', 'المتوسط', 'مسائل حسابية', 'منوعات حسابية',
         'الزوايا والمستقيمات', 'المثلث', 'الرباعي', 'الدائرة',
         'الاشكال المركبة', 'الهندسة الإحداثية', 'المجسمات', 'منوعات هندسية',
-        'الرسوم البيانية', 'الاحتمالات', 'منوعات',
+        'الرسوم البيانية', 'الاحتمالات' , 'منوعات',
         'المتطابقات', 'المقادير الجبرية', 'المعادلات والمتباينات',
         'الجذور', 'المسائل اللفظية', 'النمط', 'منوعات جبر'
       ].includes(bank)) {
         quantQuestions.push(...shuffled.slice(0, count));
       } else {
-        verbalQuestions.push(...shuffled.slice(0, count));
+        // ترتيب البنوك اللفظية حسب الأفضلية
+        const verbalPriority = ['التناظر اللفظي','إكمال الجمل','الخطأ السياقي','الكلمة الشاذة','استيعاب المقروء'];
+
+        if (verbalPriority.includes(bank)) {
+          verbalQuestions.push({
+            bank,
+            priority: verbalPriority.indexOf(bank),
+            questions: shuffled.slice(0, count)
+          });
+        } else {
+          // بنوك لفظية غير مذكورة في القائمة
+          verbalQuestions.push({
+            bank,
+            priority: verbalPriority.length + 1, // أقل أولوية
+            questions: shuffled.slice(0, count)
+          });
+        }
+        
+        // ترتيب البنوك حسب الأولوية
+        verbalQuestions.sort((a, b) => a.priority - b.priority);
+        
+        // دمج الأسئلة
+        sortedVerbal = verbalQuestions.flatMap(b => b.questions);
       }
     }
   
     // ✅ اللفظي الأول بعدين الكمي
-    const orderedQuestions = [...verbalQuestions, ...quantQuestions];
-  
+    const orderedQuestions = [...sortedVerbal, ...quantQuestions];
+    console.log(orderedQuestions)
     setQuestionsSeen(prev => [...prev, ...orderedQuestions]);
     setOriginalCurrentQuestions(orderedQuestions);
     setCurrentQuestions(orderedQuestions);
@@ -204,13 +223,13 @@ useEffect(() => {
         }
     />
 
-        <h1 className="text-3xl font-bold mb-4">📝 الامتحان يتكون من {settings.length} أقسام</h1>
+        <h1 className="text-3xl font-bold mb-4">📝 الاختبار يتكون من {settings.length} أقسام</h1>
         <ul className="mb-6">
           {settings.map((s, i) => (
             <li key={i} className="text-yellow-300">- {s.name}</li>
           ))}
         </ul>
-        <button onClick={() => setStage('sectionIntro')} className="bg-yellow-500 w-40 self-center text-black px-6 py-3 rounded-xl font-bold">ابدأ الامتحان</button>
+        <button onClick={() => setStage('sectionIntro')} className="bg-yellow-500 w-40 self-center text-black px-6 py-3 rounded-xl font-bold">ابدأالاختبار</button>
       </div>
     );
   }
@@ -308,7 +327,12 @@ useEffect(() => {
               <p className="mb-1 font-bold">
                 سؤال {i + 1}{' '}
                 {markedForReview.includes(q.id) && (
-                  <span className="material-symbols-outlined text-yellow-400">flag</span>
+                 <img
+                 src="/images/flag_24dp_FFFF55_FILL0_wght400_GRAD0_opsz24.svg"
+                 alt="علامة"
+                 className="inline w-5 h-5 mr-1"
+               />
+               
                 )}
               </p>
               <p className={userAnswers[q.id] === undefined ? 'text-red-400' : 'text-green-400'}>
@@ -340,9 +364,12 @@ useEffect(() => {
               onClick={() => filterAndGoToInSection('marked')}
               className="px-4 py-2 rounded-md font-bold border bg-gray-700 text-white w-full md:w-auto"
             >
-              <span className="material-symbols-outlined text-yellow-400 align-middle mr-1">
-                flag
-              </span>
+                    <img
+                 src="/images/flag_24dp_FFFF55_FILL0_wght400_GRAD0_opsz24.svg"
+                 alt="علامة"
+                 className="inline w-5 h-5 mr-1"
+               />
+               
               المعلمة فقط
             </button>
   
@@ -381,9 +408,12 @@ useEffect(() => {
     <span
       className="text-green-400 font-bold text-sm bg-green-100 px-3 py-1 rounded-md shadow-sm"
     >
-    <span className="material-symbols-outlined">
-flag
-</span> تمت إضافته للمراجعة
+      <img
+                 src="/images/flag_24dp_FFFF55_FILL0_wght400_GRAD0_opsz24.svg"
+                 alt="علامة"
+                 className="inline w-5 h-5 mr-1"
+               />
+                تمت إضافته للمراجعة
     </span>
   ) : (
     <button
@@ -394,9 +424,12 @@ flag
       }}
       className="text-blue-500 hover:underline font-bold text-sm text-center flex align-middle bg-blue-100 px-3 py-1 rounded-md shadow-sm"
     >
-      <span className ="material-symbols-outlined  w-10">
-flag
-</span> أضف للمراجعة
+      <img
+                 src="/images/flag_24dp_FFFF55_FILL0_wght400_GRAD0_opsz24.svg"
+                 alt="علامة"
+                 className="inline w-5 h-5 mr-1"
+               />
+                أضف للمراجعة
     </button>
   )}
 
@@ -440,16 +473,15 @@ flag
 </div>
 
   {/* ✅ القسم الأيسر: معلومات السؤال */}
-  <div className="col-span-2 bg-gray-50 border-zinc-400 p-4 border rounded-lg h-fit overflow-y-auto max-h-[calc(100vh-250px)] hidden md:block">
-<p className="text-gray-800 text-lg mb-2 whitespace-pre-line">
-  {
-    current?.note
-      ? current.note
-      : 'لا توجد ملاحظات لهذا البنك'
-  }
-</p>
+  <div
+  className="col-span-2 bg-gray-50 text-justify  border border-zinc-400 p-4 rounded-lg h-fit overflow-y-auto max-h-[calc(100vh-250px)] hidden md:block"
+  dir="rtl"
+>
+  <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-line font-[Tajawal]">
+    {current?.note ? current.note : 'لا توجد ملاحظات لهذا البنك'}
+  </p>
+</div>
 
-   </div>
 </div>
 
 {/* ✅ أزرار التنقل */}

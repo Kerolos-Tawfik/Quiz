@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Question;
-use App\Models\studentinfo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class QuestionController extends Controller
 {
@@ -18,6 +19,52 @@ class QuestionController extends Controller
             'data' => $questions
         ]);
     }
+
+    public function exportAndSend(Request $request)
+    {
+        try {
+            $images = $request->input('images'); // 🖼️ مصفوفة base64
+            if (!$images || !is_array($images)) {
+                return response()->json(['message' => '❌ لم يتم إرسال أي صور'], 400);
+            }
+    
+            // 💡 أنشئ HTML يحتوي كل صورة في صفحة منفصلة
+            $html = '<html><head><style>img { max-width: 100%; height: auto; display: block; margin: auto; page-break-after: always; }</style></head><body>';
+    
+            foreach ($images as $base64Image) {
+                $html .= "<div><img src=\"$base64Image\" /></div>";
+            }
+    
+            $html .= '</body></html>';
+    
+            // 🧾 إنشاء PDF من الـ HTML
+            $pdf = Pdf::loadHTML($html)->setPaper('a4');
+    
+            $pdfFileName = 'questions_export_' . time() . '.pdf';
+            $pdfFullPath = storage_path('app/private/pdf/' . $pdfFileName);
+    
+            if (!file_exists(dirname($pdfFullPath))) {
+                mkdir(dirname($pdfFullPath), 0755, true);
+            }
+    
+            file_put_contents($pdfFullPath, $pdf->output());
+    
+            // ✉️ إرسال الملف بالإيميل
+            Mail::send([], [], function ($message) use ($pdfFullPath) {
+                $message->to('mansuor1396@gmail.com')
+                        ->subject('📚 ملف أسئلة PDF')
+                        ->attach($pdfFullPath);
+            });
+    
+            return response()->json(['message' => '✅ تم إرسال ملف الأسئلة عبر البريد الإلكتروني']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => '❌ حدث خطأ أثناء إرسال الملف',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
 public function import(Request $request)
 {
     try {
@@ -60,7 +107,12 @@ public function import(Request $request)
                     }
 
                     // احفظ الصورة
-                    file_put_contents($reactImagesPath . '/' . $imageName, base64_decode($base64Data));
+                    $imageFullPath = $reactImagesPath . '/' . $imageName;
+
+                if (!file_exists($imageFullPath)) {
+                    file_put_contents($imageFullPath, base64_decode($base64Data));
+                }
+
 
                     // استبدل @@PLUGINFILE@@ بمسار الصورة الصحيح داخل السؤال
                     $questionHtml = str_replace('@@PLUGINFILE@@/' . $imageName, '/quiz/images/' . $imageName, $questionHtml);

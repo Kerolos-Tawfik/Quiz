@@ -14,6 +14,8 @@ const AdminPanel = () => {
   const [page, setPage] = useState('panel');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [questionCountsToPdf, setQuestionCountsToPdf] = useState({});
+
   const resultsPerPage = 12;
   const navigate = useNavigate();
 
@@ -27,8 +29,28 @@ const AdminPanel = () => {
     fetchCategories();
     fetchResults();
     fetchSettings();
+    fetchPdfDistribution();
   }, []);
+  const fetchPdfDistribution = async () => {
+    try {
+      const res = await axios.get('https://api.alamthal.org/api/pdf-distribution');
+      setQuestionCountsToPdf(res.data);
+    } catch (err) {
+      console.error('❌ فشل في تحميل توزيع PDF:', err);
+    }
+  };
+  
 
+  const handleSavePdfDistribution = async () => {
+    try {
+      await axios.post('https://api.alamthal.org/api/pdf-distribution/save', questionCountsToPdf);
+      alert('✅ تم حفظ توزيع PDF بنجاح');
+    } catch (err) {
+      console.error('❌ فشل في حفظ التوزيع:', err);
+      alert('❌ فشل في الحفظ');
+    }
+  };
+  
   const safeArray = (data) => Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
 
   const fetchCategories = async () => {
@@ -237,6 +259,13 @@ const AdminPanel = () => {
  >
    📦 رفع بنك أسئلة
  </button>
+ <button
+  onClick={() => setPage('pdf_distribution')}
+  className={`px-6 py-2 rounded-xl font-bold w-full md:w-auto ${page === 'pdf_distribution' ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-yellow-300'}`}
+>
+  📄 توزيع الأسئلة للـ PDF
+</button>
+
 </div>
 {page === 'panel' && (
 
@@ -295,6 +324,40 @@ className="w-1/2 p-2 rounded-lg bg-gray-900 text-yellow-300 border border-yellow
  </div>
 </div>
 )}
+{page === 'pdf_distribution' && (
+  <div className="bg-gray-800 p-6 rounded-2xl shadow-xl border border-yellow-500">
+    <h2 className="text-2xl font-semibold mb-6 text-yellow-300">📄 تحديد عدد الأسئلة من كل بنك</h2>
+
+    {categories.map((cat, index) => (
+      <div key={index} className="flex items-center mb-4">
+        <span className="w-1/2 text-yellow-200">{cat.name}</span>
+        <input
+          type="number"
+          min={0}
+          max={questionCounts[cat.name] || 0}
+          value={questionCountsToPdf[cat.name] || 0}
+          onChange={(e) => {
+            setQuestionCountsToPdf(prev => ({
+              ...prev,
+              [cat.name]: parseInt(e.target.value) || 0,
+            }));
+          }}
+          className="w-1/2 p-2 rounded-lg bg-gray-900 text-yellow-300 border border-yellow-500"
+        />
+      </div>
+    ))}
+
+    <div className="text-center mt-6">
+      <button
+        onClick={handleSavePdfDistribution}
+        className="bg-yellow-500 hover:bg-yellow-600 px-6 py-2 rounded-xl font-bold text-gray-900"
+      >
+        💾 حفظ التوزيع
+      </button>
+    </div>
+  </div>
+)}
+
 {page === 'results' && (
  <div className="bg-gray-800 p-6 rounded-2xl shadow-xl border border-yellow-500">
    <h2 className="text-2xl font-semibold mb-6 text-yellow-300">📊 نتائج الطلاب</h2>

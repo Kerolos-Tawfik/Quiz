@@ -26,7 +26,8 @@ const Result = ({ questions, userAnswers, onRestart, student }) => {
     'الخطأ السياقي',
     'إكمال الجمل',
     'الكلمة الشاذة',
-    'استيعاب المقروء'
+    'استيعاب المقروء',
+    'التناظر اللفظي'
   ];
 
   const quantBanksList = [
@@ -237,66 +238,107 @@ const isSimilarName = (name, list) => {
     sendResultMail();
   }, []);
   // مراجعة الإجابات
-  if (showReview) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-8 font-[Tajawal] text-right">
-        <h1 className="text-3xl font-bold text-yellow-400 mb-6 text-center">📋 مراجعة إجاباتك</h1>
-        <div className="space-y-6">
-          {questions.map((question) => {
-            const selected = userAnswers[question.id];
-            const isCorrect = question.answers[selected]?.is_correct == 1;
+  return (
+    <>
+      {showReview ? (
+        // ✅ شاشة المراجعة
+        <div className="min-h-screen bg-white text-black p-8 font-[Tajawal] text-right flex flex-col items-center">
+          <h1 className="text-3xl font-bold text-yellow-500 mb-6 text-center">📋 مراجعة إجاباتك</h1>
+  
+          <div className="space-y-6 w-full max-w-2xl">
+            {questions.map((question) => {
+              const selected = userAnswers[question.id];
+              const isCorrect = question.answers[selected]?.is_correct == 1;
+  
+              return (
+                <div
+                  key={question.id}
+                  className={`p-4 rounded-lg border shadow-sm ${isCorrect ? 'border-green-600 bg-green-50' : 'border-red-400 bg-red-50'}`}
+                >
+                  <p
+                    className="font-bold mb-2 text-lg"
+                    dangerouslySetInnerHTML={{
+                      __html: question.content
+                        ?.replaceAll('@@PLUGINFILE@@', '/images')
+                        ?.replaceAll('<img', '<img style="display:block; margin:auto;"'),
+                    }}
+                  />
+  
+                  <div className="pl-4 space-y-2">
+                  {question.answers.map((a, i) => {
+  const selected = userAnswers[question.id];
+  const isCorrect = a.is_correct == 1;
+  const isWrongChoice = selected === i && !isCorrect;
 
-            return (
-              <div
-                key={question.id}
-                className={`p-4 rounded-lg border ${isCorrect ? 'border-green-500 bg-green-100/10' : 'border-red-500 bg-red-100/10'}`}
-              >
-                <p className="font-bold mb-2 text-lg" dangerouslySetInnerHTML={{
-                  __html: question.content
-                    ?.replaceAll('@@PLUGINFILE@@', '/images')
-                    ?.replaceAll('<img', '<img style="display:block; margin:auto;"'),
-                }} />
-                <div className="pl-4 space-y-2">
-                  {question.answers.map((a, i) => (
-                    <div
-                      key={i}
-                      className={`p-2 rounded ${
-                        i === selected
-                          ? a.is_correct == 1
-                            ? 'bg-green-500 text-white'
-                            : 'bg-red-500 text-white'
-                          : a.is_correct == 1
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                      dangerouslySetInnerHTML={{ __html: a.text }}
-                    />
-                  ))}
+  return (
+    <div
+      key={i}
+      className={`p-2 rounded flex items-center gap-2 ${
+        isCorrect
+          ? 'bg-green-100 text-green-800 border border-green-400'
+          : isWrongChoice
+          ? 'bg-red-100 text-red-800 border border-red-600 font-bold'
+          : 'bg-gray-100 text-gray-900'
+      }`}
+    >
+      {isCorrect && <span className="text-green-600 text-lg">✅</span>}
+      {isWrongChoice && <span className="text-red-600 text-lg">❌</span>}
+      <span dangerouslySetInnerHTML={{ __html: a.text }} />
+    </div>
+  );
+})}
+
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+  
+          <div className="mt-10 text-center">
+            <button
+              onClick={onRestart}
+              className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-3 font-bold rounded-lg mt-6"
+            >
+              🔁 إعادة الاختبار
+            </button>
+          </div>
         </div>
-
-        <div className="mt-10 text-center">
-          <button
-            onClick={() => onRestart()}
-            className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-3 font-bold rounded-lg mt-6"
-          >
-            🔁 إعادة الاختبار
-          </button>
+      ) : (
+        // ✅ شاشة النتيجة
+        <div className="min-h-screen bg-gray-900 text-white p-8 font-[Tajawal] text-center flex flex-col items-center justify-center">
+          <h1 className="text-4xl font-bold text-yellow-400 mb-6">📊 النتيجة النهائية</h1>
+          <p className="text-xl mb-2">عدد الأسئلة: {total}</p>
+          <p className="text-xl mb-2">عدد الاجابات الصحيحه: {correctCount}</p>
+          <p className="text-xl mb-6">الدرجه الكليه: {percentage}%</p>
+  
+          <div className="flex flex-col gap-4 mt-8 w-full max-w-sm">
+            <button
+              onClick={() => setShowReview(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold"
+            >
+              🔍 مراجعة إجاباتك
+            </button>
+  
+            <button
+              onClick={onRestart}
+              className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-bold"
+            >
+              🔁 إعادة الاختبار
+            </button>
+          </div>
         </div>
-      </div>
-    );
-  }
+      )}
+    </>
+  );
+  
 
   // شاشة النتيجة
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8 font-[Tajawal] text-center flex flex-col items-center justify-center">
       <h1 className="text-4xl font-bold text-yellow-400 mb-6">📊 النتيجة النهائية</h1>
       <p className="text-xl mb-2">عدد الأسئلة: {total}</p>
-      <p className="text-xl mb-2">إجابات صحيحة: {correctCount}</p>
-      <p className="text-xl mb-6">نسبة النجاح: {percentage}%</p>
+      <p className="text-xl mb-2">عدد الاجابات الصحيحه: {correctCount}</p>
+      <p className="text-xl mb-6">الدرجه الكليه: {percentage}%</p>
 
       <div className="flex flex-col gap-4 mt-8 w-full max-w-sm">
         <button

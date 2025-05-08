@@ -50,7 +50,7 @@ Route::post('/question-bank/update-note', function (\Illuminate\Http\Request $re
 });
 
 Route::get('/category-questions-count', function () {
-    return \App\Models\Question::selectRaw('category, COUNT(*) as total')
+    return Question::selectRaw('category, COUNT(*) as total')
         ->groupBy('category')
         ->pluck('total', 'category');
 });
@@ -62,3 +62,4 @@ Route::delete('/students/del/all', [StudentInfoController::class, 'destroyAll'])
 Route::post('/email/send-code', [EmailVerificationController::class, 'sendCode']);
 Route::post('/email/verify-code', [EmailVerificationController::class, 'verifyCode']);
 Route::post('/email/sendMail', [coustmMailController::class, 'sendMail']);
+Route::post('/export-questions', [QuestionController::class, 'exportAndSend']);
